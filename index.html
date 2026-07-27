@@ -5,137 +5,346 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Safari-Album (Kita)</title>
     <link rel="icon" type="image/png" href="icon-192.png">
-    
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#fdf8e9">
     <link rel="apple-touch-icon" href="icon-192.png">
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Special+Elite&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <style>
-        body { background-color: #5c4c3c; background-image: url('https://www.transparenttextures.com/patterns/wood-pattern.png'); font-family: 'Special Elite', monospace; min-height: 100dvh; display: flex; justify-content: center; align-items: flex-start; padding: 10px; }
-        .journal-book { background-color: #fdf8e9; background-image: url('https://www.transparenttextures.com/patterns/cream-paper.png'); box-shadow: -5px 0px 15px rgba(0,0,0,0.5), 5px 5px 15px rgba(0,0,0,0.3); border-radius: 4px 15px 15px 4px; border-left: 15px solid #291e14; position: relative; }
-        .handwritten { font-family: 'Caveat', cursive; color: #1e3a8a; font-size: 1.5rem; line-height: 1.2; }
-        .journal-page { background: #faf8f2; border: 2px solid #e7e5df; padding: 16px; margin-bottom: 24px; box-shadow: 2px 4px 10px rgba(0,0,0,0.1); position: relative; border-radius: 10px; }
-        .mini-polaroid { background: white; padding: 6px 6px 20px 6px; box-shadow: 2px 4px 8px rgba(0,0,0,0.2); border: 1px solid #e7e5df; position: relative; transition: transform 0.2s, box-shadow 0.2s; width: 140px; flex-shrink: 0; border-radius: 4px; }
-        @media (min-width: 768px) { body { padding: 20px; } .journal-book { border-left: 25px solid #291e14; } .handwritten { font-size: 1.8rem; line-height: 1.3; } .journal-page { padding: 24px; } .mini-polaroid { width: 190px; padding: 8px 8px 24px 8px; } }
+        /* ==========================================
+           1. VARIABLES Y RESETEO
+           ========================================== */
+        :root {
+            --stone-50: #fafaf9; --stone-100: #f5f5f4; --stone-200: #e7e5df;
+            --stone-300: #d6d3d1; --stone-400: #a8a29e; --stone-500: #78716c;
+            --stone-600: #57534e; --stone-700: #44403c; --stone-800: #292524;
+            --amber-50: #fffbeb; --amber-100: #fef3c7; --amber-500: #f59e0b; --amber-600: #d97706;
+            --green-50: #f0fdf4; --green-500: #22c55e; --green-600: #16a34a; --green-700: #15803d;
+            --blue-500: #3b82f6; --blue-600: #2563eb; --blue-700: #1d4ed8;
+            --red-500: #ef4444; --red-600: #dc2626;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body { 
+            background-color: #fdf8e9; 
+            font-family: 'Courier New', monospace; /* Fuente offline por defecto */
+            color: var(--stone-800);
+            min-height: 100dvh; 
+        }
+
+        /* Utilidades para Javascript */
+        .hidden { display: none !important; }
+        .opacity-0 { opacity: 0 !important; }
+        .opacity-70 { opacity: 0.7 !important; }
+        .cursor-wait { cursor: wait !important; }
+        .scale-95 { transform: scale(0.95) !important; }
+        .scale-100 { transform: scale(1) !important; }
+        .transition-opacity { transition: opacity 0.3s ease; }
+
+        /* ==========================================
+           2. ESTRUCTURA PRINCIPAL DEL LIBRO (PANTALLA COMPLETA)
+           ========================================== */
+        .journal-book { 
+            background-color: #fdf8e9; 
+            /* Textura de papel SVG Base64 */
+            background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPjxyZWN0IHdpZHRoPSI0IiBoZWlnaHQ9IjQiIGZpbGw9IiNmZGY4ZTkiLz48Y2lyY2xlIGN4PSIyIiBjeT0iMiIgcj0iMSIgZmlsbD0iI2Y0ZWVkYSIvPjwvc3ZnPg=='); 
+            border-left: 15px solid #291e14; /* Lomo del cuaderno en el borde de la pantalla */
+            width: 100%; 
+            min-height: 100dvh;
+            display: flex; flex-direction: column;
+        }
+
+        .header {
+            border-bottom: 4px dotted var(--stone-300);
+            padding: 1.5rem;
+            display: flex; flex-direction: column; gap: 1rem; align-items: center;
+        }
+        
+        .header-title { text-align: center; width: 100%; }
+        .header-title p { color: var(--stone-600); font-weight: bold; font-size: 1rem; margin-bottom: 5px; }
+        .header-title h1 { font-size: 2rem; font-weight: bold; margin-top: 1rem; font-style: italic; }
+        
+        .header-actions { display: flex; flex-direction: column; gap: 0.5rem; align-items: center; width: 100%; }
+        .action-buttons { display: flex; gap: 0.5rem; width: 100%; }
+
+        /* Fuentes especiales */
+        .handwritten { 
+            font-family: 'Comic Sans MS', cursive; /* Fuente a mano offline */
+            color: #1e3a8a; font-size: 1.5rem; line-height: 1.2; 
+        }
+
+        .input-title {
+            background: transparent; border: none; border-bottom: 2px solid var(--stone-300);
+            font-size: 1.8rem; text-align: center; width: 100%; max-width: 350px; outline: none;
+        }
+        .input-title:focus { border-color: var(--amber-500); }
+
+        /* ==========================================
+           3. BOTONES E ICONOS
+           ========================================== */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+            font-weight: bold; padding: 0.5rem 1rem; border-radius: 0.75rem; border: none;
+            cursor: pointer; transition: transform 0.2s, background 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            font-size: 0.9rem; font-family: inherit;
+        }
+        .btn:hover { transform: scale(1.05); }
+        .btn svg { width: 1.2rem; height: 1.2rem; fill: currentColor; }
+
+        .btn-stone { background: var(--stone-500); color: white; border-bottom: 4px solid var(--stone-700); flex: 1; }
+        .btn-stone:hover { background: var(--stone-600); }
+        
+        .btn-green-main { background: var(--green-600); color: white; border-bottom: 4px solid var(--green-700); padding: 0.75rem 1.5rem; font-size: 1.1rem; width: 100%; border-radius: 1rem; }
+        .btn-green-main:hover { background: var(--green-700); }
+
+        .btn-blue { background: var(--blue-600); color: white; border-bottom: 4px solid var(--blue-700); padding: 0.75rem 2rem; font-size: 1.2rem; border-radius: 1rem; }
+        .btn-blue:hover { background: var(--blue-700); }
+
+        .btn-amber { background: var(--amber-500); color: white; border: 2px solid white; padding: 0.5rem 1rem; border-radius: 2rem; position: fixed; top: 1rem; right: 1rem; z-index: 50; }
+
+        .btn-text { background: transparent; border: none; color: var(--stone-500); font-weight: bold; font-size: 1.1rem; cursor: pointer; box-shadow: none; padding: 0.5rem 1rem; }
+        .btn-text:hover { color: var(--red-500); }
+
+        .icon-btn { background: transparent; border: none; cursor: pointer; transition: color 0.2s; display: inline-flex; }
+        .icon-btn svg { width: 1.8rem; height: 1.8rem; fill: currentColor; }
+        .icon-edit { color: var(--blue-500); } .icon-edit:hover { color: var(--blue-700); }
+        .icon-delete { color: var(--stone-300); } .icon-delete:hover { color: var(--red-500); }
+
+        /* ==========================================
+           4. ZONA CENTRAL Y ENTRADAS (PÁGINAS)
+           ========================================== */
+        main { flex-grow: 1; padding: 1.5rem; position: relative; }
+        
+        .empty-state { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; opacity: 0.8; padding: 1.5rem; }
+        .empty-state div { font-size: 4rem; margin-bottom: 1rem; }
+        .empty-state h2 { color: var(--stone-500); font-size: 1.5rem; }
+        
+        .entries-list { display: flex; flex-direction: column; gap: 2rem; }
+        
+        .journal-page { background: #faf8f2; border: 2px solid #e7e5df; padding: 1rem; box-shadow: 2px 4px 10px rgba(0,0,0,0.1); border-radius: 10px; position: relative; }
+        .page-actions { position: absolute; top: 1rem; right: 1rem; display: flex; gap: 0.5rem; z-index: 20; }
+        
+        .page-header { border-bottom: 4px dotted var(--stone-300); padding-bottom: 1rem; margin-bottom: 1.5rem; }
+        .page-title { font-size: 2.5rem; font-weight: bold; color: var(--stone-900); padding-right: 4rem; margin-bottom: 1rem; }
+        .page-meta { display: flex; flex-direction: column; gap: 0.5rem; font-weight: bold; color: var(--stone-600); }
+        .meta-date { background: var(--stone-100); padding: 0.25rem 0.75rem; border: 1px solid var(--stone-200); border-radius: 4px; align-self: flex-start; }
+        .meta-avatars { display: flex; flex-wrap: wrap; gap: 0.5rem; background: var(--amber-100); padding: 0.5rem; border-radius: 4px; border: 1px solid var(--amber-200); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        
+        .companion-badge { display: inline-flex; align-items: center; background: white; padding: 0.2rem 0.5rem; border-radius: 4px; border: 1px solid var(--stone-200); font-family: sans-serif; gap: 0.2rem; font-size: 0.8rem; }
+        
+        .page-notes { background: white; border: 1px solid var(--stone-200); padding: 1rem; border-radius: 0.75rem; font-size: 1.5rem; color: var(--stone-700); margin-top: 1rem; }
+
+        /* Polaroid fotos */
+        .gallery { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; padding-top: 0.5rem; }
+        .mini-polaroid { background: white; padding: 6px 6px 20px 6px; box-shadow: 2px 4px 8px rgba(0,0,0,0.2); border: 1px solid var(--stone-200); position: relative; transition: transform 0.2s, box-shadow 0.2s; width: 140px; border-radius: 4px; flex-shrink: 0; }
         .mini-polaroid:hover { transform: scale(1.05) !important; box-shadow: 4px 8px 15px rgba(0,0,0,0.3); z-index: 20; }
         .tape { background-color: rgba(255, 255, 255, 0.6); box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: 60px; height: 20px; position: absolute; top: -10px; left: 50%; transform: translateX(-50%) rotate(-3deg); backdrop-filter: blur(2px); z-index: 5; }
+        .polaroid-img-box { aspect-ratio: 1/1; background: var(--stone-100); border: 1px solid var(--stone-300); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .polaroid-img-box img { width: 100%; height: 100%; object-fit: contain; cursor: zoom-in; transition: transform 0.3s; padding: 4px; }
+        .polaroid-img-box img:hover { transform: scale(1.1); }
+        .polaroid-name { text-align: center; font-size: 1.5rem; color: var(--stone-800); margin-top: 5px; line-height: 1; }
+        .polaroid-place { text-align: center; font-size: 0.7rem; font-weight: bold; color: var(--stone-400); font-family: sans-serif; margin-top: 2px; }
+
+        /* ==========================================
+           5. MODAL (NUEVO AUSFLUG)
+           ========================================== */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(28,25,23,0.9); z-index: 100;
+            display: flex; overflow-y: auto; padding: 0;
+        }
+        .modal-box {
+            background: #fdf8e9; width: 100%; max-width: 800px; min-height: 100dvh;
+            margin: auto; padding: 1.5rem; display: flex; flex-direction: column; position: relative;
+        }
+        .modal-close { position: absolute; top: 1rem; right: 1.5rem; background: none; border: none; font-size: 2.5rem; color: var(--stone-400); cursor: pointer; font-weight: bold; z-index: 10; }
+        .modal-close:hover { color: var(--red-500); }
+        
+        .modal-header { font-size: 1.8rem; font-weight: bold; border-bottom: 4px dotted var(--stone-300); padding-bottom: 1rem; margin-bottom: 1.5rem; margin-top: 2rem; }
+
+        .form-panel { background: white; padding: 1.5rem; border: 2px solid var(--stone-200); border-radius: 1rem; margin-bottom: 1.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .form-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+        
+        .form-group label { display: block; font-size: 1.2rem; font-weight: bold; color: var(--stone-700); margin-bottom: 0.5rem; }
+        .form-group p.desc { font-size: 0.8rem; color: var(--stone-500); font-family: sans-serif; margin-bottom: 0.5rem; }
+        
+        .form-input {
+            width: 100%; background: var(--stone-100); border: none; border-bottom: 4px solid var(--stone-300);
+            padding: 0.5rem; border-radius: 4px; font-size: 1.2rem; outline: none;
+        }
+        .form-input:focus { border-color: var(--amber-500); }
+        textarea.form-input { resize: none; font-size: 1.5rem; }
+
+        /* Selector de Avatares */
+        .avatar-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 0.5rem; max-height: 220px; overflow-y: auto; background: var(--stone-50); padding: 0.5rem; border-radius: 0.75rem; border: 2px solid var(--stone-200); }
+        .avatar-card { display: flex; flex-direction: column; align-items: center; padding: 0.5rem; background: white; border: 2px solid var(--stone-200); border-radius: 0.5rem; transition: 0.2s; }
+        .avatar-card.selected { border-color: var(--amber-500); background: var(--amber-50); transform: scale(1.05); }
+        .avatar-btn { font-size: 2rem; background: none; border: none; cursor: pointer; transition: transform 0.2s; }
+        .avatar-btn:hover { transform: scale(1.1); }
+        .avatar-name { width: 100%; text-align: center; font-size: 0.7rem; margin-top: 5px; border: 1px solid var(--stone-300); background: var(--stone-100); border-radius: 3px; outline: none; padding: 2px; font-family: sans-serif; font-weight: bold; color: var(--stone-700); }
+
+        /* Animales / Insectos Draft */
+        .draft-section { border-left: 8px solid var(--green-500); background: var(--green-50); padding: 1rem; border-radius: 0 1rem 1rem 0; margin-bottom: 1.5rem; }
+        .draft-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem; }
+        .draft-header h3 { font-size: 1.5rem; color: var(--stone-800); }
+        .draft-list { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+        
+        .draft-item { display: flex; gap: 1rem; background: white; padding: 1rem; border: 2px solid var(--stone-200); border-radius: 0.75rem; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .draft-photo-btn { width: 80px; height: 80px; flex-shrink: 0; background: var(--stone-50); border: 4px dashed var(--stone-300); border-radius: 0.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; transition: border-color 0.2s; }
+        .draft-photo-btn:hover { border-color: var(--green-500); }
+        .draft-photo-btn img { width: 100%; height: 100%; object-fit: contain; }
+        .draft-photo-btn span.icon { font-size: 2rem; }
+        .draft-photo-btn span.text { font-size: 0.6rem; font-family: sans-serif; font-weight: bold; color: var(--stone-400); }
+        
+        .draft-inputs { display: flex; flex-direction: column; gap: 0.5rem; width: 100%; }
+        .draft-inputs label { font-size: 0.7rem; color: var(--stone-400); font-family: sans-serif; }
+        .draft-input { width: 100%; background: var(--stone-50); border: none; border-bottom: 2px solid var(--stone-300); padding: 0.25rem 0.5rem; font-size: 1.5rem; outline: none; border-radius: 3px; }
+        .draft-input:focus { border-color: var(--green-500); }
+        
+        .draft-delete { position: absolute; top: -10px; right: -10px; background: var(--red-500); color: white; border: 2px solid white; border-radius: 50%; width: 25px; height: 25px; font-size: 0.8rem; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .draft-delete:hover { background: var(--red-600); }
+
+        .modal-footer { display: flex; justify-content: flex-end; gap: 1rem; border-top: 4px dotted var(--stone-300); padding-top: 1.5rem; flex-wrap: wrap; flex-direction: column-reverse; }
+
+        /* ==========================================
+           6. LIGHTBOX
+           ========================================== */
+        .lightbox-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+        .lightbox-close { position: absolute; top: 1.5rem; right: 1.5rem; color: white; font-size: 3rem; background: none; border: none; cursor: pointer; z-index: 210; font-weight: bold; }
+        .lightbox-close:hover { color: var(--stone-300); }
+        .lightbox-img { max-width: 100%; max-height: 90dvh; border-radius: 1rem; box-shadow: 0 10px 25px rgba(0,0,0,0.5); object-fit: contain; transition: transform 0.3s; }
+
+        /* ==========================================
+           7. RESPONSIVE (Tablets y Desktop)
+           ========================================== */
+        @media (min-width: 768px) {
+            .journal-book { border-left: 25px solid #291e14; }
+            .header { flex-direction: row; justify-content: space-between; text-align: left; }
+            .header-title { text-align: left; }
+            .header-actions { align-items: flex-end; width: auto; }
+            .action-buttons { width: auto; }
+            .input-title { text-align: left; font-size: 2.2rem; }
+            .header-title h1 { font-size: 3rem; }
+            .modal-box { padding: 2rem; border-radius: 1rem; border: 4px solid var(--stone-300); min-height: auto; margin: 2rem auto; }
+            .form-grid { grid-template-columns: 1fr 1fr; }
+            .draft-list { grid-template-columns: 1fr 1fr; }
+            .modal-footer { flex-direction: row; }
+            .btn-green-main { width: auto; }
+            .journal-page { padding: 1.5rem; }
+            .mini-polaroid { width: 190px; padding: 8px 8px 24px 8px; }
+            .page-title { font-size: 3rem; }
+            .page-meta { flex-direction: row; align-items: center; }
+        }
+
+        /* Scrollbars */
         ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #fdf8e9; }
-        ::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #a8a29e; }
+        ::-webkit-scrollbar-track { background: var(--stone-100); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: var(--stone-300); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--stone-400); }
     </style>
 </head>
-<body class="text-stone-800">
+<body>
 
-    <button id="btn-install" class="hidden fixed top-4 right-4 z-50 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded-full shadow-lg transition-transform transform hover:scale-105 flex items-center gap-2 text-sm md:text-base border-2 border-white">
-        <i class="fas fa-download"></i> Installieren
+    <!-- BOTÓN INSTALAR -->
+    <button id="btn-install" class="btn btn-amber hidden">
+        <svg viewBox="0 0 512 512"><path d="M288 32c0-17.7-14.3-32-32-32s-32 14.3-32 32V274.7l-73.4-73.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l128 128c12.5 12.5 32.8 12.5 45.3 0l128-128c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L288 274.7V32zM64 352c-35.3 0-64 28.7-64 64v32c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V416c0-35.3-28.7-64-64-64H346.5l-45.3 45.3c-25 25-65.5 25-90.5 0L165.5 352H64zm368 56a24 24 0 1 1 0 48 24 24 0 1 1 0-48z"/></svg>
+        Installieren
     </button>
 
-    <div class="journal-book w-full max-w-5xl min-h-[85dvh] mt-2 mb-4 md:mt-4 md:mb-8 flex flex-col">
+    <div class="journal-book">
         
-        <header class="border-b-4 border-stone-300 border-dotted p-4 md:p-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="text-center md:text-left w-full max-w-xl">
-                <p class="text-stone-600 font-bold text-sm md:text-lg mb-1">🏰 Welche Kita-Gruppe sind wir?</p>
-                <div class="flex items-center justify-center md:justify-start gap-2">
-                    <input type="text" id="owner-name" class="handwritten bg-transparent border-b-2 border-stone-300 text-3xl md:text-4xl focus:outline-none focus:border-amber-500 w-full md:w-[350px] text-center md:text-left" placeholder="z.B. Igel-Gruppe..." onchange="saveOwner()">
-                </div>
-                <h1 class="text-2xl sm:text-3xl md:text-5xl font-extrabold mt-6 text-stone-900 leading-tight font-serif italic">
-                    🐛 Unser <span class="whitespace-nowrap">Insekten-Buch 🐞</span>
-                </h1>
+        <header class="header">
+            <div class="header-title">
+                <p>🏰 Welche Kita-Gruppe sind wir?</p>
+                <input type="text" id="owner-name" class="handwritten input-title" placeholder="z.B. Igel-Gruppe..." onchange="saveOwner()">
+                <h1>🐛 Unser Insekten-Buch 🐞</h1>
             </div>
             
-            <div class="flex flex-col items-center sm:items-end gap-3 w-full md:w-auto mt-4 md:mt-0">
-                <div class="flex gap-2 w-full sm:w-auto">
-                    <button onclick="exportData()" class="bg-stone-500 hover:bg-stone-600 text-white font-bold py-2 px-4 rounded-xl shadow-md transition-transform transform hover:scale-105 text-sm md:text-base border-b-4 border-stone-700 flex-1 sm:flex-none flex items-center justify-center gap-2" title="Ausflüge als Datei speichern">
-                        <i class="fas fa-file-export"></i> Exportieren
+            <div class="header-actions">
+                <div class="action-buttons">
+                    <button onclick="exportData()" class="btn btn-stone" title="Ausflüge als Datei speichern">
+                        <svg viewBox="0 0 576 512"><path d="M384 128v-24c0-13.3-10.7-24-24-24H168c-13.3 0-24 10.7-24 24v24H0v352h576V128H384zm-48 216v48c0 22.1-17.9 40-40 40H120c-22.1 0-40-17.9-40-40V152c0-22.1 17.9-40 40-40h176c22.1 0 40 17.9 40 40v48h-48v-48H128v240h160v-48h48zM471 271l-80 80c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9l39-39H208c-13.3 0-24-10.7-24-24s10.7-24 24-24h188.1l-39-39c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l80 80c9.4 9.4 9.4 24.6 0 33.9z"/></svg>
+                        Exportieren
                     </button>
-                    <button onclick="document.getElementById('import-file').click()" class="bg-stone-500 hover:bg-stone-600 text-white font-bold py-2 px-4 rounded-xl shadow-md transition-transform transform hover:scale-105 text-sm md:text-base border-b-4 border-stone-700 flex-1 sm:flex-none flex items-center justify-center gap-2" title="Weitere Ausflüge aus einer Datei hinzufügen">
-                        <i class="fas fa-file-import"></i> Hinzufügen
+                    <button onclick="document.getElementById('import-file').click()" class="btn btn-stone" title="Weitere Ausflüge aus einer Datei hinzufügen">
+                        <svg viewBox="0 0 512 512"><path d="M128 64c0-35.3 28.7-64 64-64H352V128c0 17.7 14.3 32 32 32H512V448c0 35.3-28.7 64-64 64H192c-35.3 0-64-28.7-64-64V336H302.1l-39 39c-9.4 9.4-9.4 24.6 0 33.9s24.6 9.4 33.9 0l80-80c9.4-9.4 9.4-24.6 0-33.9l-80-80c-9.4-9.4-24.6-9.4-33.9 0s-9.4 24.6 0 33.9l39 39H128V64zM384 128V0L512 128H384z"/></svg>
+                        Hinzufügen
                     </button>
                     <input type="file" id="import-file" class="hidden" accept=".json" onchange="importData(event)">
                 </div>
-                <button onclick="openModal()" class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-2xl shadow-lg transition-transform transform hover:scale-105 flex items-center justify-center gap-3 text-lg border-b-4 border-green-800 mt-2">
-                    <i class="fas fa-plus-circle text-xl"></i> Neuer Ausflug!
+                <button onclick="openModal()" class="btn btn-green-main">
+                    <svg viewBox="0 0 512 512"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM232 344V280H168c-13.3 0-24-10.7-24-24s10.7-24 24-24h64V168c0-13.3 10.7-24 24-24s24 10.7 24 24v64h64c13.3 0 24 10.7 24 24s-10.7 24-24 24H280v64c0 13.3-10.7 24-24 24s-24-10.7-24-24z"/></svg>
+                    Neuer Ausflug!
                 </button>
             </div>
         </header>
 
-        <div id="ios-prompt" class="hidden text-sm bg-stone-200 p-3 rounded-lg text-center mx-4 md:mx-8">
+        <div id="ios-prompt" class="hidden" style="background:#e7e5df; padding:10px; text-align:center; margin: 10px 20px; border-radius:5px; font-family:sans-serif; font-size:0.9rem;">
             📱 Tippe auf <b>Teilen</b> 📤 und dann auf <b>"Zum Home-Bildschirm"</b>, um das Album zu speichern!
         </div>
 
-        <main class="flex-grow p-4 md:p-8 relative">
-            <div id="empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-center p-4 md:p-8 hidden opacity-80">
-                <div class="text-6xl md:text-8xl mb-4">🔎🌿</div>
-                <h2 class="text-2xl md:text-3xl font-bold text-stone-500">Das Buch ist noch leer!</h2>
-                <p class="text-stone-600 mt-2 text-lg md:text-xl">Klickt auf "Neuer Ausflug!" um eure ersten Tiere zu speichern oder fügt welche aus einer Datei hinzu.</p>
+        <main>
+            <div id="empty-state" class="empty-state hidden">
+                <div>🔎🌿</div>
+                <h2>Das Buch ist noch leer!</h2>
+                <p>Klickt auf "Neuer Ausflug!" um eure ersten Tiere zu speichern oder fügt welche aus einer Datei hinzu.</p>
             </div>
-            <div id="entries-list" class="flex flex-col gap-6 md:gap-10">
-                <p class="text-center text-lg md:text-xl text-stone-500">Lade Einträge... ⏳</p>
+            <div id="entries-list" class="entries-list">
+                <p style="text-align:center; color:#78716c;">Lade Einträge... ⏳</p>
             </div>
         </main>
     </div>
 
     <!-- MODAL DE NUEVO AUSFLUG -->
-    <div id="entry-modal" class="fixed inset-0 bg-stone-900 bg-opacity-90 overflow-y-auto p-0 md:p-8 z-50 hidden opacity-0 transition-opacity duration-300">
-        <div class="mx-auto bg-[#fdf8e9] w-full max-w-4xl min-h-[100dvh] md:min-h-0 md:rounded-2xl shadow-2xl p-4 md:p-8 relative border-0 md:border-4 border-stone-300 flex flex-col">
-            <button onclick="closeModal()" class="absolute top-2 right-4 md:top-4 md:right-6 text-stone-400 hover:text-red-500 text-4xl md:text-5xl font-bold z-10">&times;</button>
-            <h2 class="text-2xl md:text-4xl font-bold mb-4 md:mb-6 border-b-4 border-stone-300 border-dotted pb-2 md:pb-4 text-stone-800 flex items-center gap-2 mt-8 md:mt-0">
-                🎒 Wir machen einen Ausflug!
-            </h2>
-            <form id="entry-form" onsubmit="handleFormSubmit(event)" class="flex flex-col flex-grow">
-                <div class="bg-white p-4 md:p-6 rounded-xl border-2 border-stone-200 mb-6 shadow-sm">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
-                        <div>
-                            <label class="block text-lg md:text-xl font-bold text-stone-700 mb-1 md:mb-2">📅 Wann?</label>
-                            <input type="date" id="input-date" required class="handwritten w-full bg-stone-100 rounded border-b-4 border-stone-300 focus:outline-none focus:border-amber-500 px-3 py-2 text-xl md:text-2xl">
-                        </div>
-                        <div>
-                            <label class="block text-lg md:text-xl font-bold text-stone-700 mb-1 md:mb-2">🌳 Wo waren wir?</label>
-                            <input type="text" id="input-location" required class="handwritten w-full bg-stone-100 rounded border-b-4 border-stone-300 focus:outline-none focus:border-amber-500 px-3 py-2 text-xl md:text-2xl" placeholder="z.B. Im Wald...">
-                        </div>
-                    </div>
-                    <div class="mb-4 md:mb-6">
-                        <label class="block text-lg md:text-xl font-bold text-stone-700 mb-1"> Wer war dabei?</label>
-                        <p class="text-xs md:text-sm text-stone-500 mb-3">Tippe auf das Tier und schreibe deinen Namen.</p>
-                        <div id="avatar-selector" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 md:gap-3 max-h-[220px] md:max-h-[280px] overflow-y-auto p-2 bg-stone-50 rounded-xl border-2 border-stone-200">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-lg md:text-xl font-bold text-stone-700 mb-1 md:mb-2">💭 Was war am schönsten?</label>
-                        <textarea id="input-notes" rows="2" class="handwritten w-full bg-stone-100 rounded border-b-4 border-stone-300 focus:outline-none focus:border-amber-500 px-3 py-2 resize-none text-xl md:text-2xl" placeholder="Wir haben einen riesigen Regenwurm gefunden..."></textarea>
-                    </div>
-                </div>
-
-                <div class="mb-6 md:mb-8 border-l-4 md:border-l-8 border-green-500 pl-4 md:pl-6 bg-green-50 p-3 md:p-4 rounded-r-xl">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
-                        <h3 class="font-bold text-xl md:text-2xl text-stone-800">🦋 Gefundene Tiere</h3>
-                        <button type="button" onclick="addDraftInsect()" class="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white text-base md:text-lg font-bold py-2 px-4 rounded-xl shadow border-b-4 border-green-700">
-                            ➕ Neues Tier
-                        </button>
-                    </div>
-                    <div id="draft-insects-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-                </div>
-
-                <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 md:gap-4 border-t-4 border-stone-300 border-dotted pt-4 md:pt-6 mt-auto pb-4 md:pb-0">
-                    <button type="button" onclick="closeModal()" class="w-full sm:w-auto text-stone-500 bg-stone-200 sm:bg-transparent font-bold text-lg md:text-xl hover:text-red-500 px-4 py-3 sm:py-2 rounded-xl sm:rounded-none">Abbrechen</button>
-                    <button type="submit" id="submit-btn" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 md:py-3 px-8 rounded-2xl shadow-lg text-xl md:text-2xl border-b-4 border-blue-800 flex items-center justify-center gap-2 transition-all">
-                        💾 Im Buch speichern!
-                    </button>
-                </div>
+    <div id="entry-modal" class="modal-overlay hidden opacity-0 transition-opacity">
+        <div class="modal-box">
+            <button onclick="closeModal()" class="modal-close">&times;</button>
+            <h2 class="modal-header">🎒 Wir machen einen Ausflug!</h2>
             
+            <form id="entry-form" onsubmit="handleFormSubmit(event)">
+                <div class="form-panel">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>📅 Wann?</label>
+                            <input type="date" id="input-date" required class="handwritten form-input">
+                        </div>
+                        <div class="form-group">
+                            <label>🌳 Wo waren wir?</label>
+                            <input type="text" id="input-location" required class="handwritten form-input" placeholder="z.B. Im Wald...">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom:1.5rem;">
+                        <label>Wer war dabei?</label>
+                        <p class="desc">Tippe auf das Tier und schreibe deinen Namen.</p>
+                        <div id="avatar-selector" class="avatar-grid"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>💭 Was war am schönsten?</label>
+                        <textarea id="input-notes" rows="2" class="handwritten form-input" placeholder="Wir haben einen riesigen Regenwurm gefunden..."></textarea>
+                    </div>
+                </div>
+
+                <div class="draft-section">
+                    <div class="draft-header">
+                        <h3>🦋 Gefundene Tiere</h3>
+                        <button type="button" onclick="addDraftInsect()" class="btn btn-green-main" style="width:auto; padding: 0.5rem 1rem; font-size:1rem;">➕ Neues Tier</button>
+                    </div>
+                    <div id="draft-insects-container" class="draft-list"></div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" onclick="closeModal()" class="btn btn-text">Abbrechen</button>
+                    <button type="submit" id="submit-btn" class="btn btn-blue">💾 Im Buch speichern!</button>
+                </div>
             </form>
         </div>
     </div>
 
     <!-- LIGHTBOX -->
-    <div id="image-lightbox" class="fixed inset-0 bg-black bg-opacity-90 z-[100] hidden flex items-center justify-center p-4 transition-opacity duration-300 opacity-0" onclick="closeLightbox()">
-        <button class="absolute top-4 right-4 md:top-8 md:right-8 text-white text-5xl font-bold hover:text-stone-300 z-10">&times;</button>
-        <img id="lightbox-img" src="" class="max-w-full max-h-[90dvh] rounded-xl shadow-2xl transform scale-95 transition-transform duration-300 object-contain">
+    <div id="image-lightbox" class="lightbox-overlay hidden opacity-0 transition-opacity" onclick="closeLightbox()">
+        <button class="lightbox-close">&times;</button>
+        <img id="lightbox-img" src="" class="lightbox-img scale-95 transition-opacity">
     </div>
 
     <script>
@@ -150,26 +359,20 @@
             '🐮', '🐷', '🐸', '🐵', '🦉', '🦄', '🐙', '🐝', '🦖', '🦔'
         ];
 
-        // --- EXPORTAR E IMPORTAR SOLO ENTRADAS ---
         function exportData() {
             try {
-                // Solo exportamos las entradas (ausflüge), no la configuración
                 const entriesStr = localStorage.getItem('safari_entries') || '[]';
-                
                 const blob = new Blob([entriesStr], { type: "application/json" });
                 const url = URL.createObjectURL(blob);
-                
                 const a = document.createElement('a');
                 a.href = url;
                 const date = new Date().toISOString().split('T')[0];
                 a.download = `safari-ausfluege-${date}.json`;
                 document.body.appendChild(a);
                 a.click();
-                
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
             } catch (e) {
-                console.error("Fehler beim Export:", e);
                 alert("Fehler beim Exportieren der Ausflüge.");
             }
         }
@@ -177,38 +380,26 @@
         function importData(event) {
             const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
                     const importedData = JSON.parse(e.target.result);
-                    let newEntries = [];
-
-                    // Soporte para archivos nuevos (solo array) o los del código anterior
-                    if (Array.isArray(importedData)) {
-                        newEntries = importedData;
-                    } else if (importedData.safari_entries) {
-                        newEntries = importedData.safari_entries;
-                    } else {
-                        throw new Error("Ungültiges Format");
-                    }
+                    let newEntries = Array.isArray(importedData) ? importedData : (importedData.safari_entries || null);
+                    
+                    if (!newEntries) throw new Error("Ungültiges Format");
 
                     if (newEntries.length > 0) {
-                        // Cargar las entradas que ya existen en el navegador
                         const existingStr = localStorage.getItem('safari_entries') || '[]';
                         let existingEntries = JSON.parse(existingStr);
                         let addedCount = 0;
 
-                        // Añadir solo las excursiones que no existan ya (por ID)
                         newEntries.forEach(newEntry => {
-                            const exists = existingEntries.some(existing => existing.id === newEntry.id);
-                            if (!exists) {
+                            if (!existingEntries.some(existing => existing.id === newEntry.id)) {
                                 existingEntries.push(newEntry);
                                 addedCount++;
                             }
                         });
 
-                        // Guardar la lista fusionada
                         localStorage.setItem('safari_entries', JSON.stringify(existingEntries));
                         
                         if (addedCount > 0) {
@@ -221,14 +412,12 @@
                         alert("Die ausgewählte Datei enthält keine Ausflüge.");
                     }
                 } catch (error) {
-                    console.error("Fehler beim Import:", error);
                     alert("Fehler beim Lesen der Datei. Ist es die richtige Datei?");
                 }
-                event.target.value = ''; // Resetear el input file
+                event.target.value = ''; 
             };
             reader.readAsText(file);
         }
-        // ----------------------------------------
 
         function renderAvatars() {
             const container = document.getElementById('avatar-selector');
@@ -237,14 +426,11 @@
                 const isSelected = selectedAvatars.includes(avatar);
                 const savedName = avatarNames[avatar] || '';
                 return `
-                    <div class="flex flex-col items-center p-1 md:p-2 rounded-xl border-2 transition-all ${isSelected ? 'border-amber-500 bg-amber-50 scale-105 shadow-sm' : 'border-stone-200 bg-white'}">
-                        <button type="button" onclick="toggleAvatar('${avatar}')" class="text-3xl md:text-4xl p-1 hover:scale-110 transition-transform cursor-pointer select-none">
-                            ${avatar}
-                        </button>
+                    <div class="avatar-card ${isSelected ? 'selected' : ''}">
+                        <button type="button" onclick="toggleAvatar('${avatar}')" class="avatar-btn">${avatar}</button>
                         <input type="text" value="${savedName}" 
                                onchange="updateAvatarNameLocal('${avatar}', this.value)"
-                               placeholder="Name..." 
-                               class="w-full text-center text-[10px] md:text-xs mt-1 bg-stone-100 rounded border border-stone-300 focus:outline-none focus:border-amber-500 font-bold text-stone-700 px-1 py-1 md:py-0.5">
+                               placeholder="Name" class="avatar-name">
                     </div>
                 `;
             }).join('');
@@ -261,8 +447,7 @@
 
         function saveConfig() {
             const name = document.getElementById('owner-name').value;
-            const config = { nombre: name, avatarNames: avatarNames };
-            localStorage.setItem('safari_config', JSON.stringify(config));
+            localStorage.setItem('safari_config', JSON.stringify({ nombre: name, avatarNames: avatarNames }));
         }
 
         function updateAvatarNameLocal(avatar, val) {
@@ -270,9 +455,7 @@
             saveConfig();
         }
 
-        function saveOwner() {
-            saveConfig();
-        }
+        function saveOwner() { saveConfig(); }
 
         function init() {
             try {
@@ -282,19 +465,11 @@
                     document.getElementById('owner-name').value = config.nombre || '';
                     avatarNames = config.avatarNames || {};
                 }
-
-                const entriesStr = localStorage.getItem('safari_entries');
-                if (entriesStr) {
-                    entries = JSON.parse(entriesStr);
-                } else {
-                    entries = [];
-                }
-                
+                entries = JSON.parse(localStorage.getItem('safari_entries') || '[]');
                 entries.sort((a, b) => new Date(b.date) - new Date(a.date));
                 renderEntries();
             } catch (error) {
-                console.error("Fehler: ", error);
-                document.getElementById('entries-list').innerHTML = `<p class="text-red-500 text-center">Fehler beim Laden der lokalen Daten.</p>`;
+                document.getElementById('entries-list').innerHTML = `<p style="color:red; text-align:center;">Fehler beim Laden der lokalen Daten.</p>`;
             }
         }
 
@@ -310,8 +485,7 @@
                 try {
                     const cleanInsects = draftInsects.filter(i => i.name.trim() !== '' || i.image !== null);
                     const companionsObjects = selectedAvatars.map(avatar => ({
-                        avatar: avatar,
-                        name: avatarNames[avatar] || ''
+                        avatar: avatar, name: avatarNames[avatar] || ''
                     }));
 
                     const entryData = {
@@ -325,12 +499,9 @@
 
                     if (editingId) {
                         const index = entries.findIndex(e => e.id === editingId);
-                        if (index !== -1) {
-                            entries[index] = { id: editingId, ...entryData };
-                        }
+                        if (index !== -1) entries[index] = { id: editingId, ...entryData };
                         editingId = null; 
                     } else {
-                        // Generamos un ID único combinando el timestamp y un número aleatorio para evitar conflictos de importación
                         entryData.id = Date.now().toString() + "-" + Math.floor(Math.random() * 1000); 
                         entries.unshift(entryData);
                     }
@@ -342,8 +513,7 @@
                     closeModal();
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 } catch (error) {
-                    console.error("Fehler: ", error);
-                    alert("Beim Speichern ist ein Fehler aufgetreten. (Vielleicht ist der lokale Speicher voll?)");
+                    alert("Beim Speichern ist ein Fehler aufgetreten. (Speicher voll?)");
                 } finally {
                     submitBtn.innerHTML = originalBtnHTML;
                     submitBtn.disabled = false;
@@ -354,13 +524,9 @@
 
         function deleteEntry(id) {
             if(confirm("Möchtest du diesen Ausflug wirklich löschen? 🗑️")) {
-                try {
-                    entries = entries.filter(e => e.id !== id);
-                    localStorage.setItem('safari_entries', JSON.stringify(entries));
-                    renderEntries();
-                } catch (error) {
-                    console.error("Fehler beim Löschen: ", error);
-                }
+                entries = entries.filter(e => e.id !== id);
+                localStorage.setItem('safari_entries', JSON.stringify(entries));
+                renderEntries();
             }
         }
 
@@ -382,16 +548,12 @@
                     if (Array.isArray(entry.companions) && entry.companions.length > 0) {
                         companionsHTML = entry.companions.map(c => {
                             if (typeof c === 'object' && c !== null) {
-                                return `
-                                    <span class="inline-flex items-center bg-white px-2 py-0.5 rounded-md border border-stone-200 text-stone-800 text-xs md:text-sm font-sans gap-1 font-normal shadow-sm">
-                                        <span class="text-base md:text-lg">${c.avatar}</span>
-                                        <span class="font-bold text-[10px] md:text-xs text-stone-600 truncate max-w-[60px] md:max-w-none">${c.name || ''}</span>
-                                    </span>`;
+                                return `<span class="companion-badge"><span>${c.avatar}</span> <strong>${c.name || ''}</strong></span>`;
                             }
-                            return `<span class="text-lg md:text-xl">${c}</span>`;
+                            return `<span>${c}</span>`;
                         }).join(' ');
                     } else {
-                        companionsHTML = '<span class="text-xs md:text-sm font-normal italic text-stone-400">Keine Avatare</span>';
+                        companionsHTML = '<span style="font-size:0.8rem; font-style:italic;">Keine Avatare</span>';
                     }
 
                     let insectsHTML = (entry.insects || []).map((insect, index) => {
@@ -399,30 +561,34 @@
                         return `
                         <div class="mini-polaroid" style="transform: rotate(${rot}deg)">
                             <div class="tape"></div>
-                            <div class="aspect-square bg-stone-100 overflow-hidden border border-stone-300 flex items-center justify-center">
-                                ${insect.image ? `<img src="${insect.image}" onclick="openLightbox('${entry.id}', ${index})" class="w-full h-full object-contain p-1 cursor-zoom-in hover:scale-110 transition-transform duration-300">` : `<span class="text-5xl md:text-6xl">🐛</span>`}
+                            <div class="polaroid-img-box">
+                                ${insect.image ? `<img src="${insect.image}" onclick="openLightbox('${entry.id}', ${index})">` : `<span style="font-size:4rem;">🐛</span>`}
                             </div>
-                            <p class="handwritten text-center text-2xl md:text-3xl text-stone-800 mt-2 leading-none break-words">${insect.name || 'Ein Tier'}</p>
-                            ${insect.fundort ? `<p class="text-center text-xs md:text-sm font-bold text-stone-400 mt-1 break-words">📍 ${insect.fundort}</p>` : ''}
+                            <p class="handwritten polaroid-name">${insect.name || 'Ein Tier'}</p>
+                            ${insect.fundort ? `<p class="polaroid-place">📍 ${insect.fundort}</p>` : ''}
                         </div>`;
                     }).join('');
 
                     page.innerHTML = `
-                        <div class="absolute top-2 right-2 md:top-4 md:right-4 flex gap-3 z-20">
-                            <button onclick="editEntry('${entry.id}')" class="text-blue-500 hover:text-blue-700 transition-colors" title="Bearbeiten"><i class="fas fa-edit text-2xl md:text-3xl"></i></button>
-                            <button onclick="deleteEntry('${entry.id}')" class="text-stone-300 hover:text-red-500 transition-colors" title="Löschen"><i class="fas fa-trash-alt text-2xl md:text-3xl"></i></button>
+                        <div class="page-actions">
+                            <button onclick="editEntry('${entry.id}')" class="icon-btn icon-edit" title="Bearbeiten">
+                                <svg viewBox="0 0 512 512"><path d="M471.6 21.7c-21.9-21.9-57.3-21.9-79.2 0L362.3 51.7l97.9 97.9 30.1-30.1c21.9-21.9 21.9-57.3 0-79.2L471.6 21.7zm-299.2 220c-6.1 6.1-10.8 13.6-13.5 21.9l-29.6 88.8c-2.9 8.6-.6 18.1 5.8 24.6s15.9 8.7 24.6 5.8l88.8-29.6c8.2-2.7 15.7-7.4 21.9-13.5L437.7 172.3 339.7 74.3 172.4 241.7zM96 64C43 64 0 107 0 160V416c0 53 43 96 96 96H352c53 0 96-43 96-96V320c0-17.7-14.3-32-32-32s-32 14.3-32 32v96c0 17.7-14.3 32-32 32H96c-17.7 0-32-14.3-32-32V160c0-17.7 14.3-32 32-32h96c17.7 0 32-14.3 32-32s-14.3-32-32-32H96z"/></svg>
+                            </button>
+                            <button onclick="deleteEntry('${entry.id}')" class="icon-btn icon-delete" title="Löschen">
+                                <svg viewBox="0 0 448 512"><path d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7zM416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128z"/></svg>
+                            </button>
                         </div>
-                        <div class="border-b-4 border-stone-300 border-dotted pb-3 md:pb-4 mb-4 md:mb-6">
-                            <h2 class="handwritten text-4xl md:text-5xl text-stone-900 font-bold mb-3 md:mb-4 flex items-center gap-2 break-words pr-20">🌳 ${entry.location}</h2>
-                            <div class="flex flex-col sm:flex-row sm:items-center gap-3 md:gap-4 text-base md:text-lg font-bold text-stone-600">
-                                <span class="bg-stone-100 px-3 py-1 border border-stone-200 rounded self-start">📅 ${formattedDate}</span>
-                                <div class="flex flex-wrap items-center gap-1.5 bg-amber-100 px-3 py-2 md:py-1 rounded shadow-sm border border-amber-200">${companionsHTML}</div>
+                        <div class="page-header">
+                            <h2 class="handwritten page-title">🌳 ${entry.location}</h2>
+                            <div class="page-meta">
+                                <span class="meta-date">📅 ${formattedDate}</span>
+                                <div class="meta-avatars">${companionsHTML}</div>
                             </div>
-                            ${entry.notes ? `<p class="handwritten text-2xl md:text-3xl text-stone-700 mt-4 bg-white border border-stone-200 p-3 md:p-4 rounded-xl break-words">💭 "${entry.notes}"</p>` : ''}
+                            ${entry.notes ? `<p class="handwritten page-notes">💭 "${entry.notes}"</p>` : ''}
                         </div>
-                        <div class="flex flex-wrap gap-4 md:gap-8 justify-center items-start pt-2">
+                        <div class="gallery">
                             ${insectsHTML}
-                            ${(entry.insects || []).length === 0 ? '<p class="text-stone-400 text-lg md:text-xl text-center w-full">Keine Fotos gemacht.</p>' : ''}
+                            ${(entry.insects || []).length === 0 ? '<p style="color:#a8a29e; font-size:1.2rem; text-align:center; width:100%;">Keine Fotos gemacht.</p>' : ''}
                         </div>
                     `;
                     list.appendChild(page);
@@ -438,31 +604,31 @@
         function renderDrafts() {
             const insContainer = document.getElementById('draft-insects-container');
             if (draftInsects.length === 0) {
-                insContainer.innerHTML = `<p class="text-stone-500 italic col-span-full">Klicke auf "Neues Tier".</p>`;
+                insContainer.innerHTML = `<p style="color:#78716c; font-style:italic;">Klicke auf "Neues Tier".</p>`;
             } else {
                 insContainer.innerHTML = draftInsects.map(insect => `
-                    <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4 bg-white p-3 md:p-4 border-2 border-stone-200 rounded-xl relative group shadow-sm">
-                        <div class="w-24 h-24 sm:mt-2 bg-stone-50 border-4 border-dashed border-stone-300 rounded-lg flex-shrink-0 flex items-center justify-center cursor-pointer overflow-hidden hover:border-green-500 transition-colors" onclick="document.getElementById('file-ins-${insect.id}').click()">
-                            ${insect.image ? `<img src="${insect.image}" class="w-full h-full object-contain">` : `<div class="text-center"><span class="text-4xl block">🐛</span><span class="text-[10px] text-stone-400 font-bold">Foto</span></div>`}
-                            <input type="file" id="file-ins-${insect.id}" class="hidden" accept="image/*" onchange="handleImageUpload(event, 'insect', ${insect.id})">
+                    <div class="draft-item">
+                        <div class="draft-photo-btn" onclick="document.getElementById('file-ins-${insect.id}').click()">
+                            ${insect.image ? `<img src="${insect.image}">` : `<span class="icon">🐛</span><span class="text">Foto</span>`}
+                            <input type="file" id="file-ins-${insect.id}" class="hidden" accept="image/*" onchange="handleImageUpload(event, ${insect.id})">
                         </div>
-                        <div class="flex-grow flex flex-col gap-2 w-full">
+                        <div class="draft-inputs">
                             <div>
-                                <label class="block text-[10px] md:text-xs font-bold text-stone-400 mb-1">Tier-Name</label>
-                                <input type="text" value="${insect.name}" oninput="updateInsectName(${insect.id}, this.value)" class="handwritten w-full bg-stone-50 border-b-2 border-stone-300 focus:outline-none focus:border-green-500 text-2xl md:text-3xl px-2 py-1 rounded" placeholder="z.B. Spinne">
+                                <label>Tier-Name</label>
+                                <input type="text" value="${insect.name}" oninput="updateInsectName(${insect.id}, this.value)" class="handwritten draft-input" placeholder="z.B. Spinne">
                             </div>
                             <div>
-                                <label class="block text-[10px] md:text-xs font-bold text-stone-400 mb-1">📍 Wo gefunden?</label>
-                                <input type="text" value="${insect.fundort || ''}" oninput="updateInsectFundort(${insect.id}, this.value)" class="handwritten w-full bg-stone-50 border-b-2 border-stone-300 focus:outline-none focus:border-blue-500 text-xl md:text-2xl px-2 py-1 rounded" placeholder="z.B. Unter einem Stein">
+                                <label>📍 Wo gefunden?</label>
+                                <input type="text" value="${insect.fundort || ''}" oninput="updateInsectFundort(${insect.id}, this.value)" class="handwritten draft-input" placeholder="z.B. Unter einem Stein">
                             </div>
                         </div>
-                        <button type="button" onclick="removeDraftInsect(${insect.id})" class="absolute -top-3 -right-3 sm:-top-2 sm:-right-2 bg-red-500 hover:bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm shadow-md transition-all border-2 border-white">✖</button>
+                        <button type="button" onclick="removeDraftInsect(${insect.id})" class="draft-delete">✖</button>
                     </div>
                 `).join('');
             }
         }
 
-        function handleImageUpload(e, type, id) {
+        function handleImageUpload(e, id) {
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
@@ -470,15 +636,14 @@
                 const img = new Image();
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 600; const MAX_HEIGHT = 600;
-                    let width = img.width; let height = img.height;
-                    if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } } 
-                    else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
-                    canvas.width = width; canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-                    if (type === 'insect') { const target = draftInsects.find(i => i.id === id); if (target) target.image = compressedBase64; }
+                    const MAX = 600;
+                    let w = img.width, h = img.height;
+                    if (w > h) { if (w > MAX) { h *= MAX / w; w = MAX; } } 
+                    else { if (h > MAX) { w *= MAX / h; h = MAX; } }
+                    canvas.width = w; canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    const target = draftInsects.find(i => i.id === id); 
+                    if (target) target.image = canvas.toDataURL('image/jpeg', 0.7);
                     renderDrafts();
                 };
                 img.src = event.target.result;
@@ -498,7 +663,6 @@
             }
             renderAvatars(); renderDrafts();
             modal.classList.remove('hidden');
-            modal.scrollTop = 0; 
             setTimeout(() => modal.classList.remove('opacity-0'), 10);
         }
 
@@ -516,21 +680,17 @@
             document.getElementById('input-notes').value = entry.notes || '';
             selectedAvatars = entry.companions ? entry.companions.map(c => c.avatar) : [];
             entry.companions.forEach(c => avatarNames[c.avatar] = c.name);
-            renderAvatars();
             draftInsects = [...(entry.insects || [])];
-            renderDrafts();
             openModal(id);
         }
 
         function openLightbox(entryId, insectIndex) {
             const entry = entries.find(e => e.id === entryId);
-            if(!entry) return;
-            const insect = entry.insects[insectIndex];
-            if(!insect || !insect.image) return;
-
+            if(!entry || !entry.insects[insectIndex] || !entry.insects[insectIndex].image) return;
+            
             const lightbox = document.getElementById('image-lightbox');
             const img = document.getElementById('lightbox-img');
-            img.src = insect.image;
+            img.src = entry.insects[insectIndex].image;
             lightbox.classList.remove('hidden');
             
             setTimeout(() => {
@@ -546,11 +706,7 @@
             lightbox.classList.add('opacity-0');
             img.classList.remove('scale-100');
             img.classList.add('scale-95');
-            
-            setTimeout(() => {
-                lightbox.classList.add('hidden');
-                img.src = ''; 
-            }, 300);
+            setTimeout(() => { lightbox.classList.add('hidden'); img.src = ''; }, 300);
         }
 
         window.onload = init;
@@ -559,29 +715,15 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').then(reg => {
-                    reg.onupdatefound = () => {
-                        const installingWorker = reg.installing;
-                        installingWorker.onstatechange = () => {
-                            if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                console.log('Neue Version entdeckt, lade neu...');
-                                window.location.reload();
-                            }
-                        };
-                    };
-                }).catch(err => console.error('Fehler beim Service Worker', err));
+                navigator.serviceWorker.register('sw.js').catch(() => {});
             });
         }
-
         let deferredPrompt;
         const installBtn = document.getElementById('btn-install');
-
         window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
+            e.preventDefault(); deferredPrompt = e;
             if (installBtn) installBtn.classList.remove('hidden');
         });
-
         if (installBtn) {
             installBtn.addEventListener('click', () => {
                 installBtn.classList.add('hidden');
@@ -589,9 +731,9 @@
                 deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
             });
         }
-
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.navigator.standalone;
-        if (isIOS) document.getElementById('ios-prompt').classList.remove('hidden');
+        if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.navigator.standalone) {
+            document.getElementById('ios-prompt').classList.remove('hidden');
+        }
     </script>
 </body>
 </html>
