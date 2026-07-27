@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Safari-Album (Kita)</title>
+    <link rel="icon" type="image/png" href="icon-192.png">
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#fdf8e9">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Special+Elite&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { background-color: #5c4c3c; background-image: url('https://www.transparenttextures.com/patterns/wood-pattern.png'); font-family: 'Special Elite', monospace; min-height: 100dvh; display: flex; justify-content: center; align-items: flex-start; padding: 10px; }
+        .journal-book { background-color: #fdf8e9; background-image: url('https://www.transparenttextures.com/patterns/cream-paper.png'); box-shadow: -5px 0px 15px rgba(0,0,0,0.5), 5px 5px 15px rgba(0,0,0,0.3); border-radius: 4px 15px 15px 4px; border-left: 15px solid #291e14; position: relative; }
+        .handwritten { font-family: 'Caveat', cursive; color: #1e3a8a; font-size: 1.5rem; line-height: 1.2; }
+        .journal-page { background: #faf8f2; border: 2px solid #e7e5df; padding: 16px; margin-bottom: 24px; box-shadow: 2px 4px 10px rgba(0,0,0,0.1); position: relative; border-radius: 10px; }
+        .mini-polaroid { background: white; padding: 6px 6px 20px 6px; box-shadow: 2px 4px 8px rgba(0,0,0,0.2); border: 1px solid #e7e5df; position: relative; transition: transform 0.2s, box-shadow 0.2s; width: 140px; flex-shrink: 0; border-radius: 4px; }
+        @media (min-width: 768px) { body { padding: 20px; } .journal-book { border-left: 25px solid #291e14; } .handwritten { font-size: 1.8rem; line-height: 1.3; } .journal-page { padding: 24px; } .mini-polaroid { width: 190px; padding: 8px 8px 24px 8px; } }
+        .mini-polaroid:hover { transform: scale(1.05) !important; box-shadow: 4px 8px 15px rgba(0,0,0,0.3); z-index: 20; }
+        .tape { background-color: rgba(255, 255, 255, 0.6); box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: 60px; height: 20px; position: absolute; top: -10px; left: 50%; transform: translateX(-50%) rotate(-3deg); backdrop-filter: blur(2px); z-index: 5; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #fdf8e9; }
+        ::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a29e; }
+    </style>
+</head>
+<body class="text-stone-800">
+
+    <button id="btn-install" class="hidden fixed top-4 right-4 z-50 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded-full shadow-lg transition-transform transform hover:scale-105 flex items-center gap-2 text-sm md:text-base border-2 border-white">
+        <i class="fas fa-download"></i> Installieren
+    </button>
+
+    <div class="journal-book w-full max-w-5xl min-h-[85dvh] mt-2 mb-4 md:mt-4 md:mb-8 flex flex-col">
+        
+        <header class="border-b-4 border-stone-300 border-dotted p-4 md:p-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="text-center md:text-left w-full max-w-xl">
+                <p class="text-stone-600 font-bold text-sm md:text-lg mb-1">🏰 Welche Kita-Gruppe sind wir?</p>
+                <div class="flex items-center justify-center md:justify-start gap-2">
+                    <input type="text" id="owner-name" class="handwritten bg-transparent border-b-2 border-stone-300 text-3xl md:text-4xl focus:outline-none focus:border-amber-500 w-full md:w-[350px] text-center md:text-left" placeholder="z.B. Igel-Gruppe..." onchange="saveOwner()">
+                </div>
+                <h1 class="text-2xl sm:text-3xl md:text-5xl font-extrabold mt-6 text-stone-900 leading-tight font-serif italic">
+                    🐛 Unser <span class="whitespace-nowrap">Insekten-Buch 🐞</span>
+                </h1>
+            </div>
+            
+            <div class="flex flex-col items-center sm:items-end gap-3 w-full md:w-auto mt-4 md:mt-0">
+                <div class="flex gap-2 w-full sm:w-auto">
+                    <button onclick="exportData()" class="bg-stone-500 hover:bg-stone-600 text-white font-bold py-2 px-4 rounded-xl shadow-md transition-transform transform hover:scale-105 text-sm md:text-base border-b-4 border-stone-700 flex-1 sm:flex-none flex items-center justify-center gap-2" title="Ausflüge als Datei speichern">
+                        <i class="fas fa-file-export"></i> Exportieren
+                    </button>
+                    <button onclick="document.getElementById('import-file').click()" class="bg-stone-500 hover:bg-stone-600 text-white font-bold py-2 px-4 rounded-xl shadow-md transition-transform transform hover:scale-105 text-sm md:text-base border-b-4 border-stone-700 flex-1 sm:flex-none flex items-center justify-center gap-2" title="Weitere Ausflüge aus einer Datei hinzufügen">
+                        <i class="fas fa-file-import"></i> Hinzufügen
+                    </button>
+                    <input type="file" id="import-file" class="hidden" accept=".json" onchange="importData(event)">
+                </div>
+                <button onclick="openModal()" class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-2xl shadow-lg transition-transform transform hover:scale-105 flex items-center justify-center gap-3 text-lg border-b-4 border-green-800 mt-2">
+                    <i class="fas fa-plus-circle text-xl"></i> Neuer Ausflug!
+                </button>
+            </div>
+        </header>
+
+        <div id="ios-prompt" class="hidden text-sm bg-stone-200 p-3 rounded-lg text-center mx-4 md:mx-8">
+            📱 Tippe auf <b>Teilen</b> 📤 und dann auf <b>"Zum Home-Bildschirm"</b>, um das Album zu speichern!
+        </div>
+
+        <main class="flex-grow p-4 md:p-8 relative">
+            <div id="empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-center p-4 md:p-8 hidden opacity-80">
+                <div class="text-6xl md:text-8xl mb-4">🔎🌿</div>
+                <h2 class="text-2xl md:text-3xl font-bold text-stone-500">Das Buch ist noch leer!</h2>
+                <p class="text-stone-600 mt-2 text-lg md:text-xl">Klickt auf "Neuer Ausflug!" um eure ersten Tiere zu speichern oder fügt welche aus einer Datei hinzu.</p>
+            </div>
+            <div id="entries-list" class="flex flex-col gap-6 md:gap-10">
+                <p class="text-center text-lg md:text-xl text-stone-500">Lade Einträge... ⏳</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL DE NUEVO AUSFLUG -->
+    <div id="entry-modal" class="fixed inset-0 bg-stone-900 bg-opacity-90 overflow-y-auto p-0 md:p-8 z-50 hidden opacity-0 transition-opacity duration-300">
+        <div class="mx-auto bg-[#fdf8e9] w-full max-w-4xl min-h-[100dvh] md:min-h-0 md:rounded-2xl shadow-2xl p-4 md:p-8 relative border-0 md:border-4 border-stone-300 flex flex-col">
+            <button onclick="closeModal()" class="absolute top-2 right-4 md:top-4 md:right-6 text-stone-400 hover:text-red-500 text-4xl md:text-5xl font-bold z-10">&times;</button>
+            <h2 class="text-2xl md:text-4xl font-bold mb-4 md:mb-6 border-b-4 border-stone-300 border-dotted pb-2 md:pb-4 text-stone-800 flex items-center gap-2 mt-8 md:mt-0">
+                🎒 Wir machen einen Ausflug!
+            </h2>
+            <form id="entry-form" onsubmit="handleFormSubmit(event)" class="flex flex-col flex-grow">
+                <div class="bg-white p-4 md:p-6 rounded-xl border-2 border-stone-200 mb-6 shadow-sm">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
+                        <div>
+                            <label class="block text-lg md:text-xl font-bold text-stone-700 mb-1 md:mb-2">📅 Wann?</label>
+                            <input type="date" id="input-date" required class="handwritten w-full bg-stone-100 rounded border-b-4 border-stone-300 focus:outline-none focus:border-amber-500 px-3 py-2 text-xl md:text-2xl">
+                        </div>
+                        <div>
+                            <label class="block text-lg md:text-xl font-bold text-stone-700 mb-1 md:mb-2">🌳 Wo waren wir?</label>
+                            <input type="text" id="input-location" required class="handwritten w-full bg-stone-100 rounded border-b-4 border-stone-300 focus:outline-none focus:border-amber-500 px-3 py-2 text-xl md:text-2xl" placeholder="z.B. Im Wald...">
+                        </div>
+                    </div>
+                    <div class="mb-4 md:mb-6">
+                        <label class="block text-lg md:text-xl font-bold text-stone-700 mb-1"> Wer war dabei?</label>
+                        <p class="text-xs md:text-sm text-stone-500 mb-3">Tippe auf das Tier und schreibe deinen Namen.</p>
+                        <div id="avatar-selector" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 md:gap-3 max-h-[220px] md:max-h-[280px] overflow-y-auto p-2 bg-stone-50 rounded-xl border-2 border-stone-200">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-lg md:text-xl font-bold text-stone-700 mb-1 md:mb-2">💭 Was war am schönsten?</label>
+                        <textarea id="input-notes" rows="2" class="handwritten w-full bg-stone-100 rounded border-b-4 border-stone-300 focus:outline-none focus:border-amber-500 px-3 py-2 resize-none text-xl md:text-2xl" placeholder="Wir haben einen riesigen Regenwurm gefunden..."></textarea>
+                    </div>
+                </div>
+
+                <div class="mb-6 md:mb-8 border-l-4 md:border-l-8 border-green-500 pl-4 md:pl-6 bg-green-50 p-3 md:p-4 rounded-r-xl">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+                        <h3 class="font-bold text-xl md:text-2xl text-stone-800">🦋 Gefundene Tiere</h3>
+                        <button type="button" onclick="addDraftInsect()" class="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white text-base md:text-lg font-bold py-2 px-4 rounded-xl shadow border-b-4 border-green-700">
+                            ➕ Neues Tier
+                        </button>
+                    </div>
+                    <div id="draft-insects-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                </div>
+
+                <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 md:gap-4 border-t-4 border-stone-300 border-dotted pt-4 md:pt-6 mt-auto pb-4 md:pb-0">
+                    <button type="button" onclick="closeModal()" class="w-full sm:w-auto text-stone-500 bg-stone-200 sm:bg-transparent font-bold text-lg md:text-xl hover:text-red-500 px-4 py-3 sm:py-2 rounded-xl sm:rounded-none">Abbrechen</button>
+                    <button type="submit" id="submit-btn" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 md:py-3 px-8 rounded-2xl shadow-lg text-xl md:text-2xl border-b-4 border-blue-800 flex items-center justify-center gap-2 transition-all">
+                        💾 Im Buch speichern!
+                    </button>
+                </div>
+            
+            </form>
+        </div>
+    </div>
+
+    <!-- LIGHTBOX -->
+    <div id="image-lightbox" class="fixed inset-0 bg-black bg-opacity-90 z-[100] hidden flex items-center justify-center p-4 transition-opacity duration-300 opacity-0" onclick="closeLightbox()">
+        <button class="absolute top-4 right-4 md:top-8 md:right-8 text-white text-5xl font-bold hover:text-stone-300 z-10">&times;</button>
+        <img id="lightbox-img" src="" class="max-w-full max-h-[90dvh] rounded-xl shadow-2xl transform scale-95 transition-transform duration-300 object-contain">
+    </div>
+
+    <script>
+        let entries = [];
+        let draftInsects = [];
+        let editingId = null; 
+        let selectedAvatars = [];
+        let avatarNames = {}; 
+        
+        const availableAvatars = [
+            '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐯', '🦁', 
+            '🐮', '🐷', '🐸', '🐵', '🦉', '🦄', '🐙', '🐝', '🦖', '🦔'
+        ];
+
+        // --- EXPORTAR E IMPORTAR SOLO ENTRADAS ---
+        function exportData() {
+            try {
+                // Solo exportamos las entradas (ausflüge), no la configuración
+                const entriesStr = localStorage.getItem('safari_entries') || '[]';
+                
+                const blob = new Blob([entriesStr], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                const date = new Date().toISOString().split('T')[0];
+                a.download = `safari-ausfluege-${date}.json`;
+                document.body.appendChild(a);
+                a.click();
+                
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                console.error("Fehler beim Export:", e);
+                alert("Fehler beim Exportieren der Ausflüge.");
+            }
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    let newEntries = [];
+
+                    // Soporte para archivos nuevos (solo array) o los del código anterior
+                    if (Array.isArray(importedData)) {
+                        newEntries = importedData;
+                    } else if (importedData.safari_entries) {
+                        newEntries = importedData.safari_entries;
+                    } else {
+                        throw new Error("Ungültiges Format");
+                    }
+
+                    if (newEntries.length > 0) {
+                        // Cargar las entradas que ya existen en el navegador
+                        const existingStr = localStorage.getItem('safari_entries') || '[]';
+                        let existingEntries = JSON.parse(existingStr);
+                        let addedCount = 0;
+
+                        // Añadir solo las excursiones que no existan ya (por ID)
+                        newEntries.forEach(newEntry => {
+                            const exists = existingEntries.some(existing => existing.id === newEntry.id);
+                            if (!exists) {
+                                existingEntries.push(newEntry);
+                                addedCount++;
+                            }
+                        });
+
+                        // Guardar la lista fusionada
+                        localStorage.setItem('safari_entries', JSON.stringify(existingEntries));
+                        
+                        if (addedCount > 0) {
+                            alert(`Erfolg! ${addedCount} neue Ausflüge wurden zum Buch hinzugefügt. 🦋`);
+                            window.location.reload(); 
+                        } else {
+                            alert("Alle diese Ausflüge waren bereits im Buch! Es wurde nichts Neues hinzugefügt.");
+                        }
+                    } else {
+                        alert("Die ausgewählte Datei enthält keine Ausflüge.");
+                    }
+                } catch (error) {
+                    console.error("Fehler beim Import:", error);
+                    alert("Fehler beim Lesen der Datei. Ist es die richtige Datei?");
+                }
+                event.target.value = ''; // Resetear el input file
+            };
+            reader.readAsText(file);
+        }
+        // ----------------------------------------
+
+        function renderAvatars() {
+            const container = document.getElementById('avatar-selector');
+            if (!container) return;
+            container.innerHTML = availableAvatars.map(avatar => {
+                const isSelected = selectedAvatars.includes(avatar);
+                const savedName = avatarNames[avatar] || '';
+                return `
+                    <div class="flex flex-col items-center p-1 md:p-2 rounded-xl border-2 transition-all ${isSelected ? 'border-amber-500 bg-amber-50 scale-105 shadow-sm' : 'border-stone-200 bg-white'}">
+                        <button type="button" onclick="toggleAvatar('${avatar}')" class="text-3xl md:text-4xl p-1 hover:scale-110 transition-transform cursor-pointer select-none">
+                            ${avatar}
+                        </button>
+                        <input type="text" value="${savedName}" 
+                               onchange="updateAvatarNameLocal('${avatar}', this.value)"
+                               placeholder="Name..." 
+                               class="w-full text-center text-[10px] md:text-xs mt-1 bg-stone-100 rounded border border-stone-300 focus:outline-none focus:border-amber-500 font-bold text-stone-700 px-1 py-1 md:py-0.5">
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleAvatar(avatar) {
+            if (selectedAvatars.includes(avatar)) {
+                selectedAvatars = selectedAvatars.filter(a => a !== avatar);
+            } else {
+                selectedAvatars.push(avatar);
+            }
+            renderAvatars();
+        }
+
+        function saveConfig() {
+            const name = document.getElementById('owner-name').value;
+            const config = { nombre: name, avatarNames: avatarNames };
+            localStorage.setItem('safari_config', JSON.stringify(config));
+        }
+
+        function updateAvatarNameLocal(avatar, val) {
+            avatarNames[avatar] = val;
+            saveConfig();
+        }
+
+        function saveOwner() {
+            saveConfig();
+        }
+
+        function init() {
+            try {
+                const configStr = localStorage.getItem('safari_config');
+                if (configStr) {
+                    const config = JSON.parse(configStr);
+                    document.getElementById('owner-name').value = config.nombre || '';
+                    avatarNames = config.avatarNames || {};
+                }
+
+                const entriesStr = localStorage.getItem('safari_entries');
+                if (entriesStr) {
+                    entries = JSON.parse(entriesStr);
+                } else {
+                    entries = [];
+                }
+                
+                entries.sort((a, b) => new Date(b.date) - new Date(a.date));
+                renderEntries();
+            } catch (error) {
+                console.error("Fehler: ", error);
+                document.getElementById('entries-list').innerHTML = `<p class="text-red-500 text-center">Fehler beim Laden der lokalen Daten.</p>`;
+            }
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submit-btn');
+            const originalBtnHTML = submitBtn.innerHTML;
+            submitBtn.innerHTML = '⏳ Speichern...';
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-70', 'cursor-wait');
+            
+            setTimeout(() => {
+                try {
+                    const cleanInsects = draftInsects.filter(i => i.name.trim() !== '' || i.image !== null);
+                    const companionsObjects = selectedAvatars.map(avatar => ({
+                        avatar: avatar,
+                        name: avatarNames[avatar] || ''
+                    }));
+
+                    const entryData = {
+                        date: document.getElementById('input-date').value,
+                        location: document.getElementById('input-location').value,
+                        companions: companionsObjects, 
+                        notes: document.getElementById('input-notes').value,
+                        insects: cleanInsects,
+                        timestamp: new Date().toISOString()
+                    };
+
+                    if (editingId) {
+                        const index = entries.findIndex(e => e.id === editingId);
+                        if (index !== -1) {
+                            entries[index] = { id: editingId, ...entryData };
+                        }
+                        editingId = null; 
+                    } else {
+                        // Generamos un ID único combinando el timestamp y un número aleatorio para evitar conflictos de importación
+                        entryData.id = Date.now().toString() + "-" + Math.floor(Math.random() * 1000); 
+                        entries.unshift(entryData);
+                    }
+                    
+                    localStorage.setItem('safari_entries', JSON.stringify(entries));
+                    entries.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    
+                    renderEntries();
+                    closeModal();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } catch (error) {
+                    console.error("Fehler: ", error);
+                    alert("Beim Speichern ist ein Fehler aufgetreten. (Vielleicht ist der lokale Speicher voll?)");
+                } finally {
+                    submitBtn.innerHTML = originalBtnHTML;
+                    submitBtn.disabled = false;
+                    submitBtn.classList.remove('opacity-70', 'cursor-wait');
+                }
+            }, 10);
+        }
+
+        function deleteEntry(id) {
+            if(confirm("Möchtest du diesen Ausflug wirklich löschen? 🗑️")) {
+                try {
+                    entries = entries.filter(e => e.id !== id);
+                    localStorage.setItem('safari_entries', JSON.stringify(entries));
+                    renderEntries();
+                } catch (error) {
+                    console.error("Fehler beim Löschen: ", error);
+                }
+            }
+        }
+
+        function renderEntries() {
+            const list = document.getElementById('entries-list');
+            const emptyState = document.getElementById('empty-state');
+            list.innerHTML = '';
+            
+            if (entries.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                entries.forEach(entry => {
+                    const formattedDate = new Date(entry.date).toLocaleDateString('de-DE');
+                    const page = document.createElement('div');
+                    page.className = "journal-page";
+                    
+                    let companionsHTML = '';
+                    if (Array.isArray(entry.companions) && entry.companions.length > 0) {
+                        companionsHTML = entry.companions.map(c => {
+                            if (typeof c === 'object' && c !== null) {
+                                return `
+                                    <span class="inline-flex items-center bg-white px-2 py-0.5 rounded-md border border-stone-200 text-stone-800 text-xs md:text-sm font-sans gap-1 font-normal shadow-sm">
+                                        <span class="text-base md:text-lg">${c.avatar}</span>
+                                        <span class="font-bold text-[10px] md:text-xs text-stone-600 truncate max-w-[60px] md:max-w-none">${c.name || ''}</span>
+                                    </span>`;
+                            }
+                            return `<span class="text-lg md:text-xl">${c}</span>`;
+                        }).join(' ');
+                    } else {
+                        companionsHTML = '<span class="text-xs md:text-sm font-normal italic text-stone-400">Keine Avatare</span>';
+                    }
+
+                    let insectsHTML = (entry.insects || []).map((insect, index) => {
+                        const rot = (Math.random() * 10) - 5;
+                        return `
+                        <div class="mini-polaroid" style="transform: rotate(${rot}deg)">
+                            <div class="tape"></div>
+                            <div class="aspect-square bg-stone-100 overflow-hidden border border-stone-300 flex items-center justify-center">
+                                ${insect.image ? `<img src="${insect.image}" onclick="openLightbox('${entry.id}', ${index})" class="w-full h-full object-contain p-1 cursor-zoom-in hover:scale-110 transition-transform duration-300">` : `<span class="text-5xl md:text-6xl">🐛</span>`}
+                            </div>
+                            <p class="handwritten text-center text-2xl md:text-3xl text-stone-800 mt-2 leading-none break-words">${insect.name || 'Ein Tier'}</p>
+                            ${insect.fundort ? `<p class="text-center text-xs md:text-sm font-bold text-stone-400 mt-1 break-words">📍 ${insect.fundort}</p>` : ''}
+                        </div>`;
+                    }).join('');
+
+                    page.innerHTML = `
+                        <div class="absolute top-2 right-2 md:top-4 md:right-4 flex gap-3 z-20">
+                            <button onclick="editEntry('${entry.id}')" class="text-blue-500 hover:text-blue-700 transition-colors" title="Bearbeiten"><i class="fas fa-edit text-2xl md:text-3xl"></i></button>
+                            <button onclick="deleteEntry('${entry.id}')" class="text-stone-300 hover:text-red-500 transition-colors" title="Löschen"><i class="fas fa-trash-alt text-2xl md:text-3xl"></i></button>
+                        </div>
+                        <div class="border-b-4 border-stone-300 border-dotted pb-3 md:pb-4 mb-4 md:mb-6">
+                            <h2 class="handwritten text-4xl md:text-5xl text-stone-900 font-bold mb-3 md:mb-4 flex items-center gap-2 break-words pr-20">🌳 ${entry.location}</h2>
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-3 md:gap-4 text-base md:text-lg font-bold text-stone-600">
+                                <span class="bg-stone-100 px-3 py-1 border border-stone-200 rounded self-start">📅 ${formattedDate}</span>
+                                <div class="flex flex-wrap items-center gap-1.5 bg-amber-100 px-3 py-2 md:py-1 rounded shadow-sm border border-amber-200">${companionsHTML}</div>
+                            </div>
+                            ${entry.notes ? `<p class="handwritten text-2xl md:text-3xl text-stone-700 mt-4 bg-white border border-stone-200 p-3 md:p-4 rounded-xl break-words">💭 "${entry.notes}"</p>` : ''}
+                        </div>
+                        <div class="flex flex-wrap gap-4 md:gap-8 justify-center items-start pt-2">
+                            ${insectsHTML}
+                            ${(entry.insects || []).length === 0 ? '<p class="text-stone-400 text-lg md:text-xl text-center w-full">Keine Fotos gemacht.</p>' : ''}
+                        </div>
+                    `;
+                    list.appendChild(page);
+                });
+            }
+        }
+
+        function addDraftInsect() { draftInsects.push({ id: Date.now(), name: '', fundort: '', image: null }); renderDrafts(); }
+        function removeDraftInsect(id) { draftInsects = draftInsects.filter(i => i.id !== id); renderDrafts(); }
+        function updateInsectName(id, val) { const insect = draftInsects.find(i => i.id === id); if (insect) insect.name = val; }
+        function updateInsectFundort(id, val) { const insect = draftInsects.find(i => i.id === id); if (insect) insect.fundort = val; }
+
+        function renderDrafts() {
+            const insContainer = document.getElementById('draft-insects-container');
+            if (draftInsects.length === 0) {
+                insContainer.innerHTML = `<p class="text-stone-500 italic col-span-full">Klicke auf "Neues Tier".</p>`;
+            } else {
+                insContainer.innerHTML = draftInsects.map(insect => `
+                    <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4 bg-white p-3 md:p-4 border-2 border-stone-200 rounded-xl relative group shadow-sm">
+                        <div class="w-24 h-24 sm:mt-2 bg-stone-50 border-4 border-dashed border-stone-300 rounded-lg flex-shrink-0 flex items-center justify-center cursor-pointer overflow-hidden hover:border-green-500 transition-colors" onclick="document.getElementById('file-ins-${insect.id}').click()">
+                            ${insect.image ? `<img src="${insect.image}" class="w-full h-full object-contain">` : `<div class="text-center"><span class="text-4xl block">🐛</span><span class="text-[10px] text-stone-400 font-bold">Foto</span></div>`}
+                            <input type="file" id="file-ins-${insect.id}" class="hidden" accept="image/*" onchange="handleImageUpload(event, 'insect', ${insect.id})">
+                        </div>
+                        <div class="flex-grow flex flex-col gap-2 w-full">
+                            <div>
+                                <label class="block text-[10px] md:text-xs font-bold text-stone-400 mb-1">Tier-Name</label>
+                                <input type="text" value="${insect.name}" oninput="updateInsectName(${insect.id}, this.value)" class="handwritten w-full bg-stone-50 border-b-2 border-stone-300 focus:outline-none focus:border-green-500 text-2xl md:text-3xl px-2 py-1 rounded" placeholder="z.B. Spinne">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] md:text-xs font-bold text-stone-400 mb-1">📍 Wo gefunden?</label>
+                                <input type="text" value="${insect.fundort || ''}" oninput="updateInsectFundort(${insect.id}, this.value)" class="handwritten w-full bg-stone-50 border-b-2 border-stone-300 focus:outline-none focus:border-blue-500 text-xl md:text-2xl px-2 py-1 rounded" placeholder="z.B. Unter einem Stein">
+                            </div>
+                        </div>
+                        <button type="button" onclick="removeDraftInsect(${insect.id})" class="absolute -top-3 -right-3 sm:-top-2 sm:-right-2 bg-red-500 hover:bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm shadow-md transition-all border-2 border-white">✖</button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function handleImageUpload(e, type, id) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 600; const MAX_HEIGHT = 600;
+                    let width = img.width; let height = img.height;
+                    if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } } 
+                    else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                    if (type === 'insect') { const target = draftInsects.find(i => i.id === id); if (target) target.image = compressedBase64; }
+                    renderDrafts();
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        const modal = document.getElementById('entry-modal');
+
+        function openModal(id = null) {
+            if (!id) {
+                document.getElementById('entry-form').reset();
+                document.getElementById('input-date').value = new Date().toISOString().split('T')[0];
+                selectedAvatars = [];
+                draftInsects = [{ id: Date.now() + 2, name: '', fundort: '', image: null }];
+                editingId = null; 
+            }
+            renderAvatars(); renderDrafts();
+            modal.classList.remove('hidden');
+            modal.scrollTop = 0; 
+            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+        }
+
+        function closeModal() {
+            modal.classList.add('opacity-0');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        function editEntry(id) {
+            const entry = entries.find(e => e.id === id);
+            if (!entry) return;
+            editingId = id;
+            document.getElementById('input-date').value = entry.date;
+            document.getElementById('input-location').value = entry.location;
+            document.getElementById('input-notes').value = entry.notes || '';
+            selectedAvatars = entry.companions ? entry.companions.map(c => c.avatar) : [];
+            entry.companions.forEach(c => avatarNames[c.avatar] = c.name);
+            renderAvatars();
+            draftInsects = [...(entry.insects || [])];
+            renderDrafts();
+            openModal(id);
+        }
+
+        function openLightbox(entryId, insectIndex) {
+            const entry = entries.find(e => e.id === entryId);
+            if(!entry) return;
+            const insect = entry.insects[insectIndex];
+            if(!insect || !insect.image) return;
+
+            const lightbox = document.getElementById('image-lightbox');
+            const img = document.getElementById('lightbox-img');
+            img.src = insect.image;
+            lightbox.classList.remove('hidden');
+            
+            setTimeout(() => {
+                lightbox.classList.remove('opacity-0');
+                img.classList.remove('scale-95');
+                img.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeLightbox() {
+            const lightbox = document.getElementById('image-lightbox');
+            const img = document.getElementById('lightbox-img');
+            lightbox.classList.add('opacity-0');
+            img.classList.remove('scale-100');
+            img.classList.add('scale-95');
+            
+            setTimeout(() => {
+                lightbox.classList.add('hidden');
+                img.src = ''; 
+            }, 300);
+        }
+
+        window.onload = init;
+    </script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').then(reg => {
+                    reg.onupdatefound = () => {
+                        const installingWorker = reg.installing;
+                        installingWorker.onstatechange = () => {
+                            if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                console.log('Neue Version entdeckt, lade neu...');
+                                window.location.reload();
+                            }
+                        };
+                    };
+                }).catch(err => console.error('Fehler beim Service Worker', err));
+            });
+        }
+
+        let deferredPrompt;
+        const installBtn = document.getElementById('btn-install');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (installBtn) installBtn.classList.remove('hidden');
+        });
+
+        if (installBtn) {
+            installBtn.addEventListener('click', () => {
+                installBtn.classList.add('hidden');
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
+            });
+        }
+
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.navigator.standalone;
+        if (isIOS) document.getElementById('ios-prompt').classList.remove('hidden');
+    </script>
+</body>
+</html>
